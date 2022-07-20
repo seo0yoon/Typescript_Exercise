@@ -1,1 +1,1 @@
-# HN_news
+# Hacker_news
