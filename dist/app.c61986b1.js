@@ -131,6 +131,7 @@ var store = {
 };
 
 function getData(url) {
+  //유니언 타입
   ajax.open("GET", url, false);
   ajax.send();
   return JSON.parse(ajax.response);
@@ -155,7 +156,7 @@ function newsFeed() {
   var template = "\n      <div class=\"bg-gray-600 min-h-screen\">\n        <div class=\"bg-white text-xl\">\n          <div class=\"mx-auto px-4\">\n            <div class=\"flex justify-between items-center py-6\">\n              <div class=\"flex justify-start\">\n                <h1 class=\"font-extrabold\">Hacker News</h1>\n              </div>\n              <div class=\"items-center justify-end\">\n                <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                  Previous\n                </a>\n                <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500\">\n                  Next\n                </a>\n              </div>\n            </div>\n          </div>\n        </div>\n        <div class=\"p-4 text-2xl text-gray-700\">\n          {{__news_feed__}}\n        </div>\n      </div>\n  ";
 
   if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeFeeds(getData(NEWS_URL));
+    newsFeed = store.feeds = makeFeeds(getData(NEWS_URL)); //타입가드를 하기엔 추가되는 api를 생각했을때, 효율적인 방법은 아님.
   }
 
   for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
@@ -163,8 +164,8 @@ function newsFeed() {
   }
 
   template = template.replace("{{__news_feed__}}", newsList.join(""));
-  template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : 1);
-  template = template.replace("{{__next_page__}}", store.currentPage < 3 ? store.currentPage + 1 : 3);
+  template = template.replace("{{__prev_page__}}", String(store.currentPage > 1 ? store.currentPage - 1 : 1));
+  template = template.replace("{{__next_page__}}", String(store.currentPage < 3 ? store.currentPage + 1 : 3));
   updateView(template);
 }
 
@@ -181,25 +182,22 @@ function newsDetail() {
     }
   }
 
-  function makeComment(comments, called) {
-    if (called === void 0) {
-      called = 0;
+  updateView(template.replace("{{__comments__}}", makeComment(newsContent.comments)));
+}
+
+function makeComment(comments) {
+  var commentString = [];
+
+  for (var i = 0; i < comments.length; i++) {
+    var comment = comments[i];
+    commentString.push("\n    <div style=\"padding-left: ".concat(comment.level * 40, "px;\" class=\"mt-4\">\n      <div class=\"text-gray-400\">\n        <i class=\"fa fa-sort-up mr-2\"></i>\n        <strong>").concat(comment.user, "</strong> ").concat(comment.time_ago, "\n      </div>\n     <p class=\"text-gray-700\">").concat(comment.content, "</p>\n   </div>\n   "));
+
+    if (comment.comments.length > 0) {
+      commentString.push(makeComment(comment.comments));
     }
-
-    var commentString = [];
-
-    for (var i = 0; i < comments.length; i++) {
-      commentString.push("\n      <div style=\"padding-left: ".concat(called * 40, "px\" ; class=\"mt-4\">\n        <div class=\"text-gray-400\">\n          <i class=\"fa fa-sort-up mr-2\"></i>\n          <strong>").concat(comments[i].user, "</strong> ").concat(comments[i].time_ago, "\n        </div>\n       <p class=\"text-gray-700\">").concat(comments[i].content, "</p>\n     </div>\n     "));
-
-      if (comments[i].comments.length > 0) {
-        commentString.push(makeComment(comments[i].comments, called + 1));
-      }
-    }
-
-    return commentString.join("");
   }
 
-  updateView(template.replace("{{__comments__}}", makeComment(newsContent.comments)));
+  return commentString.join("");
 }
 
 function router() {
@@ -245,7 +243,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60501" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62502" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
